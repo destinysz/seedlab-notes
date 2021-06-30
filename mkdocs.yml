@@ -1,0 +1,8 @@
+site_name: shan & security
+#site_url: https://example.com/
+#repo_url: https://github.com/example/repository/
+
+pages:
+  - 主页: 'index.md'
+  - about: 'about.md'
+theme: readthedocs
