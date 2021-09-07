@@ -6,7 +6,6 @@ markdown_extensions: # 加了这个warning，note文本块才生效
 
 pages:
   - 主页: 'index.md'
-  #  - 基础书籍推荐: 'needread.md'
 
   - 软件安全:
       - Set-UID:
@@ -34,13 +33,21 @@ pages:
           - 实验环境: 'software-security/dirtycow/env.md'
           - 利用脏牛攻击: 'software-security/dirtycow/attack.md'
   - web安全:
-      - file_upload:
+      - 文件上传:
           - 概述: 'web-security/file_upload/basic.md'
+      - csrf跨站请求伪造:
+          - 概述: 'web-security/csrf/basic.md'
+          - 实验环境说明: 'web-security/csrf/env.md'
+          - 攻击: 'web-security/csrf/attack.md'
+      - sql注入:
+            - 概述: 'web-security/sql_inject/basic.md'
+            - 实验环境说明: 'web-security/sql_inject/env.md'
+            - 攻击: 'web-security/sql_inject/attack.md'
+      - 跨站脚本攻击:
+            - 概述: 'web-security/xss/basic.md'
+            - 实验环境说明: 'web-security/xss/env.md'
+            - 攻击: 'web-security/xss/attack.md'
 
-
-#      - 跨站请求伪造: 'web-security/1.跨站请求伪造.md'
-#      - 跨站脚本攻击: 'web-security/2.跨站脚本攻击.md'
-#      - SQL注入攻击: 'web-security/3.SQL注入攻击.md'
 #  - 网络安全:
 #      - 数据包嗅探和伪造: 'web-security/1.数据包嗅探和伪造.md'
 #      - 对TCP的攻击: 'web-security/2.对TCP的攻击.md'
